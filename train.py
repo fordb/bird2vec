@@ -11,7 +11,7 @@ from config.settings import Config
 
 
 
-def main():
+def train():
     # load config
     config = Config(force_load=True)
 
@@ -48,4 +48,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    train()
