@@ -4,7 +4,7 @@ import soundfile as sf
 
 import scipy
 import numpy as np
-from datasets import Audio, Dataset
+from datasets import Dataset, load_from_disk
 from transformers import AutoFeatureExtractor
 import librosa
 
@@ -39,13 +39,20 @@ def create_label_id_mapping(audio_dir):
     return label2id, id2label
 
 
-def load_data(audio_dir, test_size=0.2):
+def load_data(config, test_size=0.2):
     # create label mappings
-    label2id, id2label = create_label_id_mapping(audio_dir)
+    label2id, id2label = create_label_id_mapping(config.dataset_dir)
+
+    # check if the dataset exists or the user is not forcing
+    # a recreation of a dataset. if yes, load directly from disk
+    if os.path.exists(config.hf_dataset_dir) and not config.force_create_dataset:
+        print("Loading dataset from disk...")
+        dataset = load_from_disk(config.hf_dataset_dir)
+        return dataset, label2id, id2label
 
     # load and format audio data
     data = []
-    for root, _, files in os.walk(audio_dir):
+    for root, _, files in os.walk(config.dataset_dir):
         for filename in files:
             if filename.endswith(".wav"):
                 species_label = os.path.basename(root)
@@ -63,6 +70,9 @@ def load_data(audio_dir, test_size=0.2):
 
     # split into train/test
     dataset = dataset.train_test_split(test_size=test_size)
+
+    # save to disk
+    dataset.save_to_disk(config.hf_dataset_dir)
 
     return dataset, label2id, id2label
 
