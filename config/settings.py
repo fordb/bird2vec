@@ -4,7 +4,7 @@ import torch
 @dataclass
 class Config:
     output_dir: str = "bird2vec"
-    dataset_dir: str = "datasets/birdsv1/"
+    dataset_dir: str = "datasets/xeno_canto_clean/"
     evaluation_strategy: str = "epoch"
     save_strategy: str = "epoch"
     learning_rate: float = 5e-6 # 1e-5 to 5e-5
@@ -22,4 +22,3 @@ class Config:
     metric_for_best_model: str = "loss"
     push_to_hub: bool = False
     report_to: str = "wandb"
-    force_load: bool = False

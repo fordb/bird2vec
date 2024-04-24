@@ -4,47 +4,70 @@ import soundfile as sf
 
 import scipy
 import numpy as np
-from datasets import load_dataset, Audio
+from datasets import Audio, Dataset
 from transformers import AutoFeatureExtractor
 import librosa
 
 
-
 def preprocess_function(examples, feature_extractor, device):
-    audio_arrays = [x["array"] for x in examples["audio"]]
     inputs = feature_extractor(
-        audio_arrays, sampling_rate=feature_extractor.sampling_rate, max_length=5*16000, truncation=True, return_tensors="pt"
+        examples["audio"],
+        sampling_rate=feature_extractor.sampling_rate,
+        max_length=5*16000,
+        truncation=True,
+        return_tensors="pt",
+        padding=True,
     )
     # Ensure tensors are moved to the appropriate device
     inputs = {k: v.to(device) for k, v in inputs.items()}
     return inputs
 
 
-def label_to_id(example, label2id):
-    example["label"] = label2id[example["label"]]
-    return example
+def create_label_id_mapping(audio_dir):
+    labels = set()
+    # collect all species names to create mappings
+    for root, _, files in os.walk(audio_dir):
+        for filename in files:
+            if filename.endswith('.wav'):
+                species_label = os.path.basename(root)
+                labels.add(species_label)
+
+    # create mappings from label names to integers and vice versa
+    label2id = {species: idx for idx, species in enumerate(sorted(labels))}
+    id2label = {idx: species for species, idx in label2id.items()}
+
+    return label2id, id2label
 
 
-def load_data(test_size=0.2, force_reload=False):
-    # load data
-    dataset = load_dataset("tglcourse/5s_birdcall_samples_top20")
-    dataset = dataset["train"]
+def load_data(audio_dir, test_size=0.2):
+    # create label mappings
+    label2id, id2label = create_label_id_mapping(audio_dir)
+
+    # load and format audio data
+    data = []
+    for root, _, files in os.walk(audio_dir):
+        for filename in files:
+            if filename.endswith(".wav"):
+                species_label = os.path.basename(root)
+                audio_path = os.path.join(root, filename)
+                audio, sr = librosa.load(audio_path, sr=16000)
+                data.append({"label": label2id[species_label], "audio": audio})
+
+    # create a Hugging Face dataset
+    dataset = Dataset.from_dict(
+        {
+            "label": [x["label"] for x in data],
+            "audio": [x["audio"] for x in data]
+        }
+    )
+
+    # split into train/test
     dataset = dataset.train_test_split(test_size=test_size)
-    return dataset
 
-
-def get_labels(dataset):
-    # get labels and useful mappings
-    labels = set(dataset["train"]["label"])
-    label2id, id2label = dict(), dict()
-    for i, label in enumerate(labels):
-        label2id[label] = i
-        id2label[i] = label
-    return labels, label2id, id2label
+    return dataset, label2id, id2label
 
 
 def featurize(dataset, device):
-    dataset = dataset.cast_column("audio", Audio(sampling_rate=16_000)) # cast to 16K audio
     feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
     # Create a partial function that includes label2id parameter
     partial_preprocess_function = partial(
@@ -54,15 +77,6 @@ def featurize(dataset, device):
     )
     featurized_dataset = dataset.map(partial_preprocess_function, batched=True, remove_columns="audio")
     return featurized_dataset, feature_extractor
-
-
-def map_labels(dataset, label2id):
-    # Create a partial function that includes label2id parameter
-    partial_label_to_id = partial(label_to_id, label2id=label2id)
-    # map train/test labels to IDs
-    dataset["train"] = dataset["train"].map(partial_label_to_id)
-    dataset["test"] = dataset["test"].map(partial_label_to_id)
-    return dataset
 
 
 def find_peaks(y, sr, FMIN=500, FMAX=12500, max_peaks=10, kernel_size=15):
