@@ -7,7 +7,7 @@ Fine tune [wav2vec2-base](https://huggingface.co/facebook/wav2vec2-base) for cla
 * Install required packages with `pip install -r requirements.txt`
 
 ## Data
-Data is from xeno-canto.org, and is focused only on recordings from owls in the United States.
+Data is from xeno-canto.org, and is focused only on recordings from owls in the United States. Try not to hammer their API, the website is amazing.
 
 Data is retrieved from `data/xeno_canto.py`:
 * Creates a metadata file, `datasets/metadata.csv`, which contains info on all of the recordings
@@ -19,3 +19,17 @@ Data is retrieved from `data/xeno_canto.py`:
 ## Model Training
 * Model parameters are controlled in the config in `config/settings.py`
 * Model training performance is logged to Weights and Biases by default
+
+## To Dos
+* Fix: improve the subset function to ensure that high quality signals are included (true peaks) and that duplicates aren't created for short samples
+* Add in ambient noise for cases that are not birds (rain, wind, silence, cars, dogs, etc.)
+* Remove very low frequency birds from data
+* Expand the recordings beyond just owls
+* Expand the recordings to all birds across the world (not just recordings in US)
+* Play around with audio cleaning a bit more
+* Add a better inference pipeline
+* Incorporate the grades of the audio clips to give the model harder challenges in eval
+* Publish model to Hugging Face
+* Publish dataset to Hugging Face
+* Compare performance against BirdNET model ([GitHub](https://github.com/kahst/BirdNET-Analyzer), [paper](https://www.sciencedirect.com/science/article/pii/S1574954121000273))
+* Integrate with BirdNET-Pi
