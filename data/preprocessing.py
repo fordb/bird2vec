@@ -160,7 +160,11 @@ def create_audio_subsets(y, sr, window_length=5.0, max_peaks=10):
 
 def clean_and_save_audio_file(audio_path, window_length=5.0, max_peaks=10, target_sr=16000, dir="datasets/xeno_canto_clean/"):
     # load audio
-    audio, sr = librosa.load(audio_path, sr=None)
+    try:
+        audio, sr = librosa.load(audio_path, sr=None)
+    except FileNotFoundError:
+        print(f"File {audio_path} not found, skipping")
+        return
     
     # extract file name
     file_name = audio_path.replace("datasets/xeno_canto/", "")
