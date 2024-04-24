@@ -3,7 +3,7 @@ import torch
 
 @dataclass
 class Config:
-    output_dir: str = "bird2vec"
+    output_dir: str = "huggingface"
     dataset_dir: str = "datasets/xeno_canto_clean"
     hf_dataset_dir: str = "datasets/birdsv1"
     evaluation_strategy: str = "epoch"

@@ -2,7 +2,7 @@ wandb/
 datasets/
 .DS_Store
 __pycache__/
-bird2vec/
+huggingface/
 *.ipynb
 failed.txt
 kill_multiprocess.sh
