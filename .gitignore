@@ -4,3 +4,5 @@ datasets/
 __pycache__/
 bird2vec/
 *.ipynb
+failed.txt
+kill_multiprocess.sh
