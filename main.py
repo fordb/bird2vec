@@ -13,7 +13,7 @@ from config.settings import Config
 
 def main():
     # load config
-    config = Config()
+    config = Config(force_load=True)
 
     # Check for MPS availability and set device
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -21,11 +21,11 @@ def main():
 
     # if data already exists, load it
     # otherwise, create training/test dataset
-    if os.path.exists(config.dataset_dir):
+    if os.path.exists(config.dataset_dir) and not config.force_load:
         print("Dataset already exists, loading from disk")
         featurized_dataset = load_from_disk(config.dataset_dir)
     else:
-        print("Dataset does not exist on disk, creating it now")
+        print("Dataset does not exist on disk (or force_load=True), creating it now")
         # load dataset and get labels
         dataset = load_data(test_size=0.2)
         labels, label2id, id2label = get_labels(dataset)
