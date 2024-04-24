@@ -29,9 +29,10 @@ metadata_df.to_csv("datasets/xeno_canto/metadata.csv", index=False)
 print(metadata_df.shape)
 
 # retrieve recordings
-q.retrieve_recordings(multiprocess=True, nproc=8, attempts=10, outdir="datasets/xeno_canto/")
+# q.retrieve_recordings(multiprocess=True, nproc=8, attempts=10, outdir="datasets/xeno_canto/")
 
 # clean and save audio files
+# TODO: parallelize this
 audio_file_paths = metadata_df["filepath"].tolist()
 for audio_file_path in tqdm(audio_file_paths):
     clean_and_save_audio_file(audio_file_path, max_peaks=5)

@@ -9,7 +9,7 @@ from config.settings import Config
 
 def train():
     # load config
-    config = Config()
+    config = Config(force_create_dataset=True)
 
     # Check for MPS availability and set device
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -25,6 +25,8 @@ def train():
 
     # featurize data
     featurized_dataset, feature_extractor = featurize(dataset, device)
+
+    # TODO: move save/load dataset from inside load_data to here
     
     # load model
     model = load_model(label2id, id2label, device)
