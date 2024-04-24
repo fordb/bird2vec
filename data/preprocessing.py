@@ -1,5 +1,6 @@
 import os
 from functools import partial
+import soundfile as sf
 
 import scipy
 import numpy as np
@@ -65,6 +66,7 @@ def map_labels(dataset, label2id):
 
 
 def find_peaks(y, sr, FMIN=500, FMAX=12500, max_peaks=10, kernel_size=15):
+    # adapted from: https://www.kaggle.com/code/johnowhitaker/peak-identification
     n_mels = 64
     hop_length = 512
     # adapted from: https://www.kaggle.com/code/johnowhitaker/peak-identification
