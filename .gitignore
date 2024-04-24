@@ -1,0 +1,5 @@
+wandb/
+datasets/
+.DS_Store
+__pycache__/
+bird2vec/
