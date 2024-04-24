@@ -4,7 +4,7 @@ import soundfile as sf
 
 import scipy
 import numpy as np
-from datasets import Dataset, load_from_disk
+from datasets import Dataset
 from transformers import AutoFeatureExtractor
 import librosa
 
@@ -43,13 +43,6 @@ def load_data(config, test_size=0.2):
     # create label mappings
     label2id, id2label = create_label_id_mapping(config.dataset_dir)
 
-    # check if the dataset exists or the user is not forcing
-    # a recreation of a dataset. if yes, load directly from disk
-    if os.path.exists(config.hf_dataset_dir) and not config.force_create_dataset:
-        print("Loading dataset from disk...")
-        dataset = load_from_disk(config.hf_dataset_dir)
-        return dataset, label2id, id2label
-
     # load and format audio data
     data = []
     for root, _, files in os.walk(config.dataset_dir):
@@ -71,13 +64,10 @@ def load_data(config, test_size=0.2):
     # split into train/test
     dataset = dataset.train_test_split(test_size=test_size)
 
-    # save to disk
-    dataset.save_to_disk(config.hf_dataset_dir)
-
     return dataset, label2id, id2label
 
 
-def featurize(dataset, device):
+def featurize(dataset, config, device):
     feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
     # Create a partial function that includes label2id parameter
     partial_preprocess_function = partial(
@@ -85,7 +75,12 @@ def featurize(dataset, device):
         feature_extractor=feature_extractor,
         device=device,
     )
+    
+    # apply the partial function to the dataset
     featurized_dataset = dataset.map(partial_preprocess_function, batched=True, remove_columns="audio")
+    # save to disk
+    featurized_dataset.save_to_disk(config.hf_dataset_dir)
+
     return featurized_dataset, feature_extractor
 
 
