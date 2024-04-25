@@ -45,6 +45,9 @@ def train():
     # train model
     trainer.train()
 
+    # TODO: plot confusion matrix
+    # wandb.log({"conf_mat": wandb.plot.confusion_matrix(probs=None, y_true=[0, 1, 1, 2, 0, 2, 2], preds=[0, 2, 1, 1, 0, 2, 0], class_names=list(id2label.values()))})
+
 
 if __name__ == "__main__":
     train()
