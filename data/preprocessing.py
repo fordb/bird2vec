@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from functools import partial
 import soundfile as sf
 
@@ -39,6 +40,26 @@ def create_label_id_mapping(audio_dir):
     return label2id, id2label
 
 
+def filter_rare_labels(dataset, threshold=10, verbose=False):
+    # count each label occurrence in the dataset
+    labels = dataset["label"]
+
+    # Count each label's frequency
+    label_counts = Counter(labels)
+    label_count_before = len(label_counts)
+
+    # count the number of occurrences of each label
+    valid_labels = {label for label, count in label_counts.items() if count >= threshold}
+    label_count_after = len(valid_labels)
+    if verbose:
+        print(f"Filtered out {label_count_before - label_count_after} labels with fewer than {threshold} examples")
+
+    # filter to only valid labels
+    filtered_dataset = dataset.filter(lambda example: example["label"] in valid_labels)
+
+    return filtered_dataset
+
+
 def load_data(config, test_size=0.2):
     # create label mappings
     label2id, id2label = create_label_id_mapping(config.dataset_dir)
@@ -60,6 +81,9 @@ def load_data(config, test_size=0.2):
             "audio": [x["audio"] for x in data]
         }
     )
+
+    # filter out rare labels
+    dataset = filter_rare_labels(dataset, threshold=config.min_label_count, verbose=config.verbose)
 
     # split into train/test
     dataset = dataset.train_test_split(test_size=test_size)

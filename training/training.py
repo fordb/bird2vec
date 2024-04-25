@@ -16,6 +16,7 @@ def get_training_args(config):
         num_train_epochs=config.num_train_epochs,
         fp16=config.fp16,
         warmup_ratio=config.warmup_ratio,
+        # warmup_steps=config.warmup_steps,
         logging_steps=config.logging_steps,
         load_best_model_at_end=config.load_best_model_at_end,
         metric_for_best_model=config.metric_for_best_model,

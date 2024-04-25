@@ -1,7 +1,7 @@
 import os
 
 import torch
-from datasets import Dataset, load_from_disk
+from datasets import load_from_disk
 from transformers import AutoFeatureExtractor
 
 from data.preprocessing import load_data, featurize, create_label_id_mapping
