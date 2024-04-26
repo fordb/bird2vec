@@ -1,10 +1,10 @@
 import os
-from collections import Counter
 from functools import partial
 import soundfile as sf
 
 import scipy
 import numpy as np
+from sklearn.utils.class_weight import compute_class_weight
 from datasets import Dataset
 from transformers import AutoFeatureExtractor
 import librosa
@@ -24,55 +24,46 @@ def preprocess_function(examples, feature_extractor, device):
     return inputs
 
 
-def create_label_id_mapping(audio_dir):
-    labels = set()
-    # collect all species names to create mappings
-    for root, _, files in os.walk(audio_dir):
-        for filename in files:
-            if filename.endswith('.wav'):
-                species_label = os.path.basename(root)
-                labels.add(species_label)
-
-    # create mappings from label names to integers and vice versa
-    label2id = {species: idx for idx, species in enumerate(sorted(labels))}
-    id2label = {idx: species for species, idx in label2id.items()}
-
-    return label2id, id2label
+def compute_class_weights(labels):
+    # compute class weights
+    unique_labels = np.unique(labels)
+    class_weights = compute_class_weight("balanced", classes=unique_labels, y=labels)
+    return class_weights
 
 
-def filter_rare_labels(dataset, threshold=10, verbose=False):
-    # count each label occurrence in the dataset
-    labels = dataset["label"]
+def find_file_paths(dir, config):
+    file_paths = []
+    labels = []
+    label2id = {}
+    id2label = {}
+    idx = 0
+    for root, _, files in os.walk(dir):
+        label_count = len([f for f in files if f.endswith(".wav")])
+        if label_count > config.data_config.min_label_count:
+            species_label = os.path.basename(root)
+            label2id[species_label] = idx
+            id2label[idx] = species_label
+            for filename in files:
+                if filename.endswith(".wav"):
+                    file_paths.append(os.path.join(root, filename))
+                    labels.append(idx)
+            idx += 1
+        else:
+            species_label = os.path.basename(root)
+            if config.verbose:
+                print(f"Skipping {species_label}- sample count {label_count} is below threshold {config.data_config.min_label_count}")
 
-    # Count each label's frequency
-    label_counts = Counter(labels)
-    label_count_before = len(label_counts)
-
-    # count the number of occurrences of each label
-    valid_labels = {label for label, count in label_counts.items() if count >= threshold}
-    label_count_after = len(valid_labels)
-    if verbose:
-        print(f"Filtered out {label_count_before - label_count_after} labels with fewer than {threshold} examples")
-
-    # filter to only valid labels
-    filtered_dataset = dataset.filter(lambda example: example["label"] in valid_labels)
-
-    return filtered_dataset
+    return file_paths, labels, label2id, id2label
 
 
-def load_data(config, test_size=0.2):
-    # create label mappings
-    label2id, id2label = create_label_id_mapping(config.dataset_dir)
-
+def create_data(config, test_size=0.2):
     # load and format audio data
     data = []
-    for root, _, files in os.walk(config.dataset_dir):
-        for filename in files:
-            if filename.endswith(".wav"):
-                species_label = os.path.basename(root)
-                audio_path = os.path.join(root, filename)
-                audio, sr = librosa.load(audio_path, sr=16000)
-                data.append({"label": label2id[species_label], "audio": audio})
+    file_paths, labels, label2id, id2label = find_file_paths(config.data_config.dataset_dir, config)
+    # load audio
+    for file_path, label in zip(file_paths, labels):
+        audio, sr = librosa.load(file_path, sr=16000)
+        data.append({"label": label, "audio": audio})
 
     # create a Hugging Face dataset
     dataset = Dataset.from_dict(
@@ -81,9 +72,6 @@ def load_data(config, test_size=0.2):
             "audio": [x["audio"] for x in data]
         }
     )
-
-    # filter out rare labels
-    dataset = filter_rare_labels(dataset, threshold=config.min_label_count, verbose=config.verbose)
 
     # split into train/test
     dataset = dataset.train_test_split(test_size=test_size)
@@ -103,9 +91,9 @@ def featurize(dataset, config, device):
     # apply the partial function to the dataset
     featurized_dataset = dataset.map(partial_preprocess_function, batched=True, remove_columns="audio")
     # save to disk
-    featurized_dataset.save_to_disk(config.hf_dataset_dir)
+    featurized_dataset.save_to_disk(config.data_config.hf_dataset_dir)
 
-    return featurized_dataset, feature_extractor
+    return featurized_dataset
 
 
 def find_peaks(y, sr, FMIN=500, FMAX=12500, max_peaks=10, kernel_size=15):
