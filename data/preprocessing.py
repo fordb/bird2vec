@@ -96,7 +96,7 @@ def featurize(dataset, config, device):
     return featurized_dataset
 
 
-def find_peaks(y, sr, FMIN=500, FMAX=12500, max_peaks=10, kernel_size=15):
+def find_peaks(y, sr, FMIN=500, FMAX=12500, max_peaks=10, kernel_size=15, prominence=0.2):
     # adapted from: https://www.kaggle.com/code/johnowhitaker/peak-identification
     n_mels = 64
     hop_length = 512
@@ -115,7 +115,7 @@ def find_peaks(y, sr, FMIN=500, FMAX=12500, max_peaks=10, kernel_size=15):
     median_pcen_snr = scipy.signal.medfilt(pcen_snr, kernel_size=kernel_size)
 
     # identify peaks
-    peaks, properties = scipy.signal.find_peaks(median_pcen_snr, prominence=0.1)
+    peaks, properties = scipy.signal.find_peaks(median_pcen_snr, prominence=prominence)
 
     peak_heights = properties["prominences"]
     # combine peaks and their properties for sorting
@@ -147,6 +147,9 @@ def create_audio_subsets(y, sr, window_length=5.0, max_peaks=10):
     # Initialize a list to hold the audio subsets
     audio_subsets = []
 
+    # keep track of extracted segments to avoid duplicates
+    extracted_segments = set()
+
     # Iterate over each peak time
     for peak_time in peak_times:
         # Convert peak time to the central sample index
@@ -156,12 +159,17 @@ def create_audio_subsets(y, sr, window_length=5.0, max_peaks=10):
         start = max(0, center_index - samples_per_side)  # Ensure start is not negative
         end = min(len(y), center_index + samples_per_side)  # Ensure end does not exceed the length of y
 
+        # skip segment if it overlaps with existing segment
+        if any(start < seg_end and end > seg_start for seg_start, seg_end in extracted_segments):
+            continue
+
         # Extract the subset from the audio array
         subset = y[start:end]
-
         # Append to the list of subsets
         audio_subsets.append(subset)
-    
+        # Add the start and end indices of the extracted segment to the set
+        extracted_segments.add((start, end))
+
     return audio_subsets
 
 

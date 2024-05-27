@@ -4,10 +4,10 @@ import torch
 
 @dataclass
 class DataConfig:
-    min_label_count: int = 100
+    min_label_count: int = 50
     force_create_dataset: bool = False
     dataset_dir: str = "datasets/xeno_canto_clean"
-    hf_dataset_dir: str = "datasets/birdsv3"
+    hf_dataset_dir: str = "datasets/birdsv4"
 
 @dataclass
 class EvalConfig:

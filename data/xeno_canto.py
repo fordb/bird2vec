@@ -28,7 +28,7 @@ metadata_df["filepath"] = metadata_df.apply(create_filepath, axis=1)
 metadata_df.to_csv("datasets/xeno_canto/metadata.csv", index=False)
 print(metadata_df.shape)
 
-# retrieve recordings
+# # retrieve recordings
 # q.retrieve_recordings(multiprocess=True, nproc=8, attempts=10, outdir="datasets/xeno_canto/")
 
 # clean and save audio files

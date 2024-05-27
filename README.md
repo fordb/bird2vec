@@ -21,9 +21,10 @@ Data is retrieved from `data/xeno_canto.py`:
 * Model training performance is logged to Weights and Biases by default
 
 ## To Dos
-* Fix: improve the subset function to ensure that high quality signals are included (true peaks) and that duplicates aren't created for short samples
+* ~~Improve the subset function to ensure that high quality signals are included (true peaks)~~
+* ~~Ensure that duplicates aren't created for short samples~~
 * Add in ambient noise for cases that are not birds (rain, wind, silence, cars, dogs, etc.)
-* Remove very low frequency birds from data
+* ~~Remove very low frequency birds from data~~
 * Expand the recordings beyond just owls
 * Expand the recordings to all birds across the world (not just recordings in US)
 * Play around with audio cleaning a bit more
