@@ -7,7 +7,7 @@ from datasets import load_from_disk
 from data.preprocessing import create_data, featurize, find_file_paths, compute_class_weights
 from training.metrics import compute_metrics
 from training.training import get_trainer
-from model.model import BirdClassifier
+from model.model import BirdClassifier, load_model
 from config.settings import Config, DataConfig, EvalConfig, ModelConfig
 
 
@@ -48,8 +48,9 @@ def train():
     class_weights.to(device)
     
     # load model
-    model = BirdClassifier(num_labels=len(label2id), config=config, device=device, class_weights=class_weights)
-    model.to(device)
+    # model = BirdClassifier(num_labels=len(label2id), config=config, device=device, class_weights=class_weights)
+    # model.to(device)
+    model = load_model(len(label2id), label2id, id2label, config, device)
 
     # Create a partial function that includes label2id parameter
     partial_compute_metrics = partial(
