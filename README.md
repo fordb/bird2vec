@@ -23,11 +23,12 @@ Data is retrieved from `data/xeno_canto.py`:
 ## To Dos
 * ~~Improve the subset function to ensure that high quality signals are included (true peaks)~~
 * ~~Ensure that duplicates aren't created for short samples~~
-* Add in ambient noise for cases that are not birds (rain, wind, silence, cars, dogs, etc.)
 * ~~Remove very low frequency birds from data~~
+* ~~Deal with class imbalance using class weights~~
+* Play around with audio cleaning a bit more
+* Add in ambient noise for cases that are not birds (rain, wind, silence, cars, dogs, etc.)
 * Expand the recordings beyond just owls
 * Expand the recordings to all birds across the world (not just recordings in US)
-* Play around with audio cleaning a bit more
 * Add a better inference pipeline
 * Incorporate the grades of the audio clips to give the model harder challenges in eval
 * Publish model to Hugging Face
