@@ -48,9 +48,9 @@ def train():
     class_weights.to(device)
     
     # load model
-    model = BirdClassifier(num_labels=len(label2id), config=config, device=device, class_weights=class_weights)
-    model.to(device)
-    # model = load_model(len(label2id), class_weights, label2id, id2label, config, device)
+    # model = BirdClassifier(num_labels=len(label2id), config=config, device=device, class_weights=class_weights)
+    # model.to(device)
+    model = load_model(len(label2id), class_weights, label2id, id2label, config, device)
 
     # Create a partial function that includes label2id parameter
     partial_compute_metrics = partial(

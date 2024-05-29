@@ -5,7 +5,7 @@ import soundfile as sf
 import scipy
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
-from datasets import Dataset
+from datasets import Dataset, ClassLabel
 from transformers import AutoFeatureExtractor
 import librosa
 
@@ -73,14 +73,26 @@ def create_data(config, test_size=0.2):
         }
     )
 
+    labels_list = sorted(list(set([x["label"] for x in data])))
+    # create classlabels to match labels to IDs
+    ClassLabels = ClassLabel(num_classes=len(labels_list), names=labels_list)
+
+    # function to map labels to IDs
+    def map_label2id(example):
+        example["label"] = ClassLabels.str2int(example["label"])
+        return example
+    dataset = dataset.map(map_label2id, batched=True)
+    # Casting label column to ClassLabel Object
+    dataset = dataset.cast_column("label", ClassLabels)
+
     # split into train/test
-    dataset = dataset.train_test_split(test_size=test_size)
+    dataset = dataset.train_test_split(test_size=test_size, shuffle=True, stratify_by_column="label")
 
     return dataset, label2id, id2label
 
 
 def featurize(dataset, config, device):
-    feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
+    feature_extractor = AutoFeatureExtractor.from_pretrained(config.model_config.model)
     # Create a partial function that includes label2id parameter
     partial_preprocess_function = partial(
         preprocess_function,

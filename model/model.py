@@ -19,26 +19,21 @@ def load_model(num_labels, class_weights, label2id, id2label, config, device):
         config=model_config,
     ).to(device)
 
+    if config.verbose:
+        print(model.num_parameters(only_trainable=True) / 1e6)
+
     return model
 
-
-class MultiHeadAttentionPool(nn.Module):
-    def __init__(self, feature_size, num_heads):
+class AttentionPool(nn.Module):
+    def __init__(self, feature_size):
         super().__init__()
-        self.multihead_attn = nn.MultiheadAttention(embed_dim=feature_size, num_heads=num_heads)
-        self.feature_size = feature_size
-
+        self.attention_weights = nn.Parameter(torch.randn(feature_size, 1))
+    
     def forward(self, x):
-        # Transpose batch and sequence dimensions
-        x = x.transpose(0, 1)  # x should be (seq_length, batch_size, feature_size)
-        # Apply multi-head attention
-        # we use x as the query, key, and value for the self-attention
-        attn_output, _ = self.multihead_attn(x, x, x)
-        # Transpose back to (batch_size, seq_length, feature_size)
-        attn_output = attn_output.transpose(0, 1)
-        # Pooling over the sequence length dimension
-        pooled_output = torch.mean(attn_output, dim=1)
-        return pooled_output
+        attention_scores = torch.matmul(x, self.attention_weights)
+        attention_scores = F.softmax(attention_scores, dim=1)
+        weighted_average = torch.sum(x * attention_scores, dim=1)
+        return weighted_average
 
 
 class BirdClassifier(nn.Module):
@@ -48,8 +43,7 @@ class BirdClassifier(nn.Module):
         self.device = device
         self.wav2vec2 = Wav2Vec2Model.from_pretrained(config.model_config.model).to(device)
         feature_size = self.wav2vec2.config.hidden_size
-        self.attention_pool = MultiHeadAttentionPool(feature_size, num_heads)
-        # self.attention_pool = AttentionPool(feature_size)
+        self.attention_pool = AttentionPool(feature_size)
         self.classifier = nn.Sequential(
             nn.Linear(feature_size, 256),
             nn.ReLU(),

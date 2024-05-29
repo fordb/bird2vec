@@ -29,7 +29,7 @@ def get_training_args(config):
 
 def get_trainer(model, featurized_dataset, compute_metrics, config):
     # load feature extractor
-    processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
+    processor = Wav2Vec2Processor.from_pretrained(config.model_config.model)
 
     # get training args
     training_args = get_training_args(config)
