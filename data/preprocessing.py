@@ -6,19 +6,20 @@ import scipy
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 from datasets import Dataset, ClassLabel
-from transformers import AutoFeatureExtractor
+from transformers import Wav2Vec2Processor
 import librosa
 
 
-def preprocess_function(examples, feature_extractor, device):
-    inputs = feature_extractor(
+def preprocess_function(examples, processor, device):
+    inputs = processor(
         examples["audio"],
-        sampling_rate=feature_extractor.sampling_rate,
+        sampling_rate=processor.feature_extractor.sampling_rate,
         max_length=5*16000,
         truncation=True,
         return_tensors="pt",
         padding=True,
     )
+    # inputs["labels"] = examples["label"]
     # Ensure tensors are moved to the appropriate device
     inputs = {k: v.to(device) for k, v in inputs.items()}
     return inputs
@@ -92,11 +93,11 @@ def create_data(config, test_size=0.2):
 
 
 def featurize(dataset, config, device):
-    feature_extractor = AutoFeatureExtractor.from_pretrained(config.model_config.model)
+    processor = Wav2Vec2Processor.from_pretrained(config.model_config.model)
     # Create a partial function that includes label2id parameter
     partial_preprocess_function = partial(
         preprocess_function,
-        feature_extractor=feature_extractor,
+        processor=processor,
         device=device,
     )
     

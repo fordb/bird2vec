@@ -25,6 +25,8 @@ Data is retrieved from `data/xeno_canto.py`:
 * ~~Ensure that duplicates aren't created for short samples~~
 * ~~Remove very low frequency birds from data~~
 * ~~Deal with class imbalance using class weights~~
+* Only get feature extractor once, avoid duplicate
+* 
 * Play around with audio cleaning a bit more
 * Add in ambient noise for cases that are not birds (rain, wind, silence, cars, dogs, etc.)
 * Expand the recordings beyond just owls

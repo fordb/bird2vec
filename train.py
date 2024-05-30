@@ -7,7 +7,7 @@ from datasets import load_from_disk
 from data.preprocessing import create_data, featurize, find_file_paths, compute_class_weights
 from training.metrics import compute_metrics
 from training.training import get_trainer
-from model.model import BirdClassifier, load_model
+from model.model import load_model
 from config.settings import Config, DataConfig, EvalConfig, ModelConfig
 
 
